@@ -20,5 +20,13 @@
         </plugins>
     </build>
 
+    <!-- https://mvnrepository.com/artifact/org.telegram/telegrambots -->
+    <dependency>
+        <groupId>org.telegram</groupId>
+        <artifactId>telegrambots</artifactId>
+        <version>3.6</version>
+    </dependency>
+
+
 
 </project>
