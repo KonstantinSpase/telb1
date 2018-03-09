@@ -68,15 +68,15 @@ public class mybot extends TelegramLongPollingBot {
             long chatId = message.getChatId();
             String strchatId = Long.toString(chatId);
 
-            if (autority.checkFile(message.getText()).equals("exist") ) {}
+            //if (autority.checkFile(message.getText()).equals("exist") ) {}
 
-            if(autority.checkFile(strchatId).equals("exist")){ sendMsg(message, "Вы вошли как " + strchatId);}else{sendMsg(message, "Авторизуйтесь");}
+            //if(autority.checkFile(strchatId).equals("exist")){ sendMsg(message, "Вы вошли как " + strchatId);}else{sendMsg(message, "Авторизуйтесь");}
 
             //if (autority.greateFile(strchatId) != 0){sendMsg("Введите пароль"); }
             //if (message.getText().equals("Пароль")){sendMsg(message,"Введите пароль");}
 
-            //if(message.getChatId() == 458108952){sendMsg(message, "Привет Ярослав");}
-            //if(message.getChatId() == 539108508){sendMsg(message, "Привет Константин");}
+            if(message.getChatId() == 458108952){sendMsg(message, "Привет Ярослав");}
+            if(message.getChatId() == 539108508){sendMsg(message, "Привет Константин");}
 
             //if (message.getText().equals("/help"))
             //  sendMsg(message, "Привет, я робот");
