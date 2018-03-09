@@ -26,6 +26,12 @@
         <artifactId>telegrambots</artifactId>
         <version>3.6</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/com.almworks.sqlite4java/sqlite4java -->
+    <dependency>
+        <groupId>com.almworks.sqlite4java</groupId>
+        <artifactId>sqlite4java</artifactId>
+        <version>1.0.392</version>
+    </dependency>
 
 
 
