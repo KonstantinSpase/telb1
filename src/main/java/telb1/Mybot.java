@@ -12,13 +12,12 @@ import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class mybot extends TelegramLongPollingBot {
+public class Mybot extends TelegramLongPollingBot {
     public long autorityStatus = 0;
     public static void main(String[] args) {
         ApiContextInitializer.init();
@@ -26,7 +25,7 @@ public class mybot extends TelegramLongPollingBot {
         BufferedReader bufferedReader  = new BufferedReader(new InputStreamReader(System.in));
 
         try {
-            telegramBotsApi.registerBot(new mybot());
+            telegramBotsApi.registerBot(new Mybot());
             //String fileName = bufferedReader.readLine();
             //autority.greateFile(fileName);
 
