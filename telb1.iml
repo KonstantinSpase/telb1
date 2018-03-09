@@ -11,5 +11,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="telegrambots-3.6-jar-with-dependencies" level="project" />
+    <orderEntry type="library" name="telegrambots-abilities-3.6-jar-with-dependencies" level="project" />
+    <orderEntry type="library" name="telegrambots-meta-3.6-jar-with-dependencies" level="project" />
+    <orderEntry type="library" name="telegrambotsextensions-3.6-jar-with-dependencies" level="project" />
   </component>
 </module>
