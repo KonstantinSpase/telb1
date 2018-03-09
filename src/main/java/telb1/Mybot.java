@@ -10,6 +10,7 @@ import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import telb1.dbl.DbManager;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -20,7 +21,9 @@ import java.util.List;
 public class Mybot extends TelegramLongPollingBot {
     public long autorityStatus = 0;
     public static void main(String[] args) {
-        ApiContextInitializer.init();
+        DbManager dbManager=new DbManager();
+        dbManager.connect();
+       /* ApiContextInitializer.init();
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
         BufferedReader bufferedReader  = new BufferedReader(new InputStreamReader(System.in));
 
@@ -45,7 +48,7 @@ public class Mybot extends TelegramLongPollingBot {
 
         //  System.out.println("err");
         //}
-
+*/
     }
 
     @Override
