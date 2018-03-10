@@ -3,9 +3,11 @@
     <properties maven-id="com.almworks.sqlite4java:sqlite4java:1.0.392" />
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/sqlite4java-1.0.392.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sqlite4java-1.0.392.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/sqlite4java-1.0.392-sources.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/sqlite4java-1.0.392-sources.jar!/" />
     </SOURCES>
   </library>
