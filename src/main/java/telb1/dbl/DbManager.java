@@ -11,23 +11,28 @@ import java.sql.Statement;
  */
 public class DbManager {
     //public static Connection conn;
-    public static Statement statmt;
-    public static ResultSet resSet;
 
-    public void connect() {
-        try {
-            Class.forName("org.sqlite.JDBC");
-            Connection connection = DriverManager.getConnection("jdbc:sqlite:sample.db");
 
-              ReadDB();
+    public String connect() throws ClassNotFoundException, SQLException {
+        Class.forName("org.sqlite.JDBC");
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:sample.db")){
 
-            connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+
+                 Statement stmt  = connection.createStatement();
+                 ResultSet rs    = stmt.executeQuery("SELECT * FROM users");
+
+                // loop through the result set
+            StringBuilder res=new StringBuilder();
+                while (rs.next()) {
+                    res.append(rs.getInt("chat_id")+" "+rs.getString("password")+"\n");
+
+                }
+                return res.toString();
+
         }
     }
 
-    public static void ReadDB(), SQLException
+   /* public static void ReadDB(), SQLException
     {
         resSet = statmt.executeQuery("SELECT * FROM users");
 
@@ -43,7 +48,7 @@ public class DbManager {
         }
 
         System.out.println("Таблица выведена");//dfgh
-    }
+    }*/
 
 
 

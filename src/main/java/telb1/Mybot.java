@@ -14,19 +14,20 @@ import telb1.dbl.DbManager;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 
 public class Mybot extends TelegramLongPollingBot {
     public long autorityStatus = 0;
-    public static void main(String[] args) {
-        DbManager dbManager=new DbManager();
-        dbManager.connect();
 
-       /* ApiContextInitializer.init();
+    public static void main(String[] args)  {
+
+
+        ApiContextInitializer.init();
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-        BufferedReader bufferedReader  = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
         try {
             telegramBotsApi.registerBot(new Mybot());
@@ -49,7 +50,6 @@ public class Mybot extends TelegramLongPollingBot {
 
         //  System.out.println("err");
         //}
-*/
     }
 
     @Override
@@ -78,8 +78,20 @@ public class Mybot extends TelegramLongPollingBot {
             //if (autority.greateFile(strchatId) != 0){sendMsg("Введите пароль"); }
             //if (message.getText().equals("Пароль")){sendMsg(message,"Введите пароль");}
 
-            if(message.getChatId() == 458108952){sendMsg(message, "Привет Ярослав");}
-            if(message.getChatId() == 539108508){sendMsg(message, "Привет Константин");}
+            if (chatId == 458108952) {
+                sendMsg(message, "Привет Ярослав");
+                DbManager dbManager=new DbManager();
+                try {
+                    sendMsg(message,dbManager.connect());
+                } catch (ClassNotFoundException e) {
+                    sendMsg(message, e.getMessage());
+                } catch (SQLException e) {
+                    sendMsg(message, e.getMessage());
+                }
+            }
+            if (chatId == 539108508) {
+                sendMsg(message, "Привет Константин");
+            }
 
             //if (message.getText().equals("/help"))
             //  sendMsg(message, "Привет, я робот");
@@ -89,7 +101,6 @@ public class Mybot extends TelegramLongPollingBot {
             System.out.println(message.getChatId());
         }
     }
-
 
 
     private void sendMsg(Message message, String text) {
