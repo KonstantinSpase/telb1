@@ -19,7 +19,7 @@ public class DbManager {
             Class.forName("org.sqlite.JDBC");
             Connection connection = DriverManager.getConnection("jdbc:sqlite:sample.db");
 
-              ReadDB();
+
 
             connection.close();
         } catch (Exception e) {
@@ -27,23 +27,7 @@ public class DbManager {
         }
     }
 
-    public static void ReadDB(), SQLException
-    {
-        resSet = statmt.executeQuery("SELECT * FROM users");
 
-        while(resSet.next())
-        {
-            int chat_id = resSet.getInt("chat_id");
-            String  name = resSet.getString("password");
-            //String  phone = resSet.getString("phone");
-            System.out.println( "ID = " + chat_id );
-            System.out.println( "name = " + name );
-           // System.out.println( "phone = " + phone );
-            System.out.println();
-        }
-
-        System.out.println("Таблица выведена");//dfgh
-    }
 
 
 
