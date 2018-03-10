@@ -11,44 +11,23 @@ import java.sql.Statement;
  */
 public class DbManager {
     //public static Connection conn;
+    public static Statement statmt;
+    public static ResultSet resSet;
+
+    public void connect() {
+        try {
+            Class.forName("org.sqlite.JDBC");
+            Connection connection = DriverManager.getConnection("jdbc:sqlite:sample.db");
 
 
-    public String connect() throws ClassNotFoundException, SQLException {
-        Class.forName("org.sqlite.JDBC");
-        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:sample.db")){
 
-
-                 Statement stmt  = connection.createStatement();
-                 ResultSet rs    = stmt.executeQuery("SELECT * FROM users");
-
-                // loop through the result set
-            StringBuilder res=new StringBuilder();
-                while (rs.next()) {
-                    res.append(rs.getInt("chat_id")+" "+rs.getString("password")+"\n");
-
-                }
-                return res.toString();
-
+            connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-   /* public static void ReadDB(), SQLException
-    {
-        resSet = statmt.executeQuery("SELECT * FROM users");
 
-        while(resSet.next())
-        {
-            int chat_id = resSet.getInt("chat_id");
-            String  name = resSet.getString("password");
-            //String  phone = resSet.getString("phone");
-            System.out.println( "ID = " + chat_id );
-            System.out.println( "name = " + name );
-           // System.out.println( "phone = " + phone );
-            System.out.println();
-        }
-
-        System.out.println("Таблица выведена");//dfgh
-    }*/
 
 
 
