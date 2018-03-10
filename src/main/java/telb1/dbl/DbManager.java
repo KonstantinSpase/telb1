@@ -42,7 +42,7 @@ public class DbManager {
             System.out.println();
         }
 
-        System.out.println("Таблица выведена");
+        System.out.println("Таблица выведена");//dfgh
     }
 
 
