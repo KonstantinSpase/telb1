@@ -27,7 +27,7 @@ public class DbManager {
         }
     }
 
-    public static void ReadDB() throws ClassNotFoundException, SQLException
+    public static void ReadDB(), SQLException
     {
         resSet = statmt.executeQuery("SELECT * FROM users");
 

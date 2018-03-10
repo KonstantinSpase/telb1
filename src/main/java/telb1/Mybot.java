@@ -23,6 +23,7 @@ public class Mybot extends TelegramLongPollingBot {
     public static void main(String[] args) {
         DbManager dbManager=new DbManager();
         dbManager.connect();
+
        /* ApiContextInitializer.init();
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
         BufferedReader bufferedReader  = new BufferedReader(new InputStreamReader(System.in));
