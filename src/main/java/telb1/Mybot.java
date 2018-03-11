@@ -11,129 +11,103 @@ import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import telb1.dbl.DbManager;
-import telb1.dbl.JDBCtest;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class Mybot extends TelegramLongPollingBot {
     public long autorityStatus = 0;
-    public static void main(String[] args) {
-       //DbManager dbManager=new DbManager();
-        //dbManager.connect();
-        JDBCtest jdbCtest = new JDBCtest();
-        jdbCtest.main();
 
-       ApiContextInitializer.init();
+    public static void main(String[] args) {
+
+        ApiContextInitializer.init();
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-        BufferedReader bufferedReader  = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
         try {
             telegramBotsApi.registerBot(new Mybot());
-            //String fileName = bufferedReader.readLine();
-            //autority.greateFile(fileName);
-
-            //fileName = bufferedReader.readLine();
-            //System.out.println(autority.getText(fileName));
-            //String Snum = bufferedReader.readLine();
-            //int num = Integer.parseInt(Snum);
-            //System.out.println(fileName);
-            //System.out.println(Snum);
-            //autority.setText(fileName, Snum);
-            //System.out.println(autority.getText(fileName));
-
 
         } catch (TelegramApiException e) {
             e.printStackTrace();
-        } //catch (IOException e){
-
-        //  System.out.println("err");
-        //}
+        }
 
     }
 
     @Override
     public String getBotUsername() {
-        return "my_h2o_bot";
+        return Config.INSTANCE.BOT_NAME;
     }
 
     @Override
     public String getBotToken() {
-        return "502797087:AAFg_VfpUGfEqoLwJiuuuMiO4NuuFI8Umzs";
+        return Config.INSTANCE.BOT_TOKEN;
     }
 
     @Override
     public void onUpdateReceived(Update update) {
 
-        System.out.println("update");
         Message message = update.getMessage();
-        if (message != null && message.hasText()) {
-            long chatId = message.getChatId();
-            String strchatId = Long.toString(chatId);
+        if (message == null || !message.hasText()) return;
+        String messageText = message.getText();
+        Long chatId = message.getChatId();
+        String messageType = getMessageType(messageText);
+        switch (messageType) {
+            case "carNumber":
+                if (!isAdmin(chatId)) {
+                    sendMessage("admin permitions need", chatId);
+                    break;
+                }
+                Integer carId = DbManager.INSTANCE.getCarId(messageText);
+                if (carId == null) {
+                    sendMessage("wrong car number", chatId);
+                    break;
+                }
+                DbManager.INSTANCE.cleanExpiredPasswords();
+                String carPass = DbManager.INSTANCE.createCarPass(carId);
+                sendMessage(carPass, chatId);
+                break;
+            case "carPass":
 
-            //if (autority.checkFile(message.getText()).equals("exist") ) {}
+                break;
+            case "washerPass":
+                if (!DbManager.INSTANCE.checkWasherPassword(messageText)) {
+                    sendMessage("wrong pass" + messageText, chatId);
+                    break;
+                }
+                
+                break;
 
-            //if(autority.checkFile(strchatId).equals("exist")){ sendMsg(message, "Вы вошли как " + strchatId);}else{sendMsg(message, "Авторизуйтесь");}
+            default:
+                sendMessage("wrong command " + messageType, chatId);
+        }
 
-            //if (autority.greateFile(strchatId) != 0){sendMsg("Введите пароль"); }
-            //if (message.getText().equals("Пароль")){sendMsg(message,"Введите пароль");}
+    }
 
-            if(message.getChatId() == 458108952){sendMsg(message, "Привет Ярослав");}
-            if(message.getChatId() == 539108508){sendMsg(message, "Привет Константин");}
-
-            //if (message.getText().equals("/help"))
-            //  sendMsg(message, "Привет, я робот");
-            //else
-            //  sendMsg(message, "Я не знаю что ответить на это");
-
-            System.out.println(message.getChatId());
+    private void sendMessage(String messageText, Long chatId) {
+        SendMessage response = new SendMessage() // Create a SendMessage object with mandatory fields
+                .setChatId(chatId)
+                .setText(messageText);
+        try {
+            execute(response); // Call method to send the message
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e.getMessage());
         }
     }
 
+    private String getMessageType(String message) {
+        if (message.matches("\\d{4}")) return "carPass";
+        if (message.matches("[А-Яа-яЁё]\\d{3}[А-Яа-яЁё]{2}\\d{2,3}")) return "carNumber";
+        if (message.length() == 6) return "washerPass";
+        return message;
+    }
 
+    private boolean isAdmin(Long chatId) {
+        return Config.INSTANCE.ADMIN_CHAT_ID.contains(chatId.toString());
+    }
 
-    private void sendMsg(Message message, String text) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.enableMarkdown(true);
-        // Создаем клавиуатуру
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        sendMessage.setReplyMarkup(replyKeyboardMarkup);
-        replyKeyboardMarkup.setSelective(true);
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        replyKeyboardMarkup.setOneTimeKeyboard(false);
-
-        // Создаем список строк клавиатуры
-        List<KeyboardRow> keyboard = new ArrayList<>();
-
-        // Первая строчка клавиатуры
-        KeyboardRow keyboardFirstRow = new KeyboardRow();
-        // Добавляем кнопки в первую строчку клавиатуры
-        keyboardFirstRow.add("/help");
-        keyboardFirstRow.add("Комманда 2");
-
-        // Вторая строчка клавиатуры
-        KeyboardRow keyboardSecondRow = new KeyboardRow();
-        // Добавляем кнопки во вторую строчку клавиатуры
-        keyboardSecondRow.add("Комманда 3");
-        keyboardSecondRow.add("Комманда 4");
-
-        // Добавляем все строчки клавиатуры в список
-
-        keyboard.add(keyboardFirstRow);
-        keyboard.add(keyboardSecondRow);
-        // и устанваливаем этот список нашей клавиатуре
-        replyKeyboardMarkup.setKeyboard(keyboard);
-        sendMessage.setChatId(message.getChatId().toString());
-        sendMessage.setReplyToMessageId(message.getMessageId());
-        sendMessage.setText(text);
-        try {
-            sendMessage(sendMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
+    private String generatePass(String messageText) {
+        return "1010";
     }
 
 }
