@@ -14,6 +14,7 @@ import telb1.dbl.DbManager;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.sql.SQLException;
 
 
 public class Mybot extends TelegramLongPollingBot {
@@ -68,14 +69,25 @@ public class Mybot extends TelegramLongPollingBot {
                 sendMessage(carPass, chatId);
                 break;
             case "carPass":
-
+                DbManager.INSTANCE.cleanExpiredPasswords();
+                carId = DbManager.INSTANCE.getCarIdFromPasswords(messageText);
+                if (carId == null) {
+                    sendMessage("wrong or expired password", chatId);
+                    break;
+                }
+                sendMessage("very good car password" + messageText, chatId);
                 break;
             case "washerPass":
                 if (!DbManager.INSTANCE.checkWasherPassword(messageText)) {
                     sendMessage("wrong pass" + messageText, chatId);
                     break;
                 }
-                
+                try {
+                    DbManager.INSTANCE.washerRegistration(messageText, chatId);
+                    sendMessage("you in" + messageText, chatId);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e.getMessage());
+                }
                 break;
 
             default:
@@ -104,10 +116,6 @@ public class Mybot extends TelegramLongPollingBot {
 
     private boolean isAdmin(Long chatId) {
         return Config.INSTANCE.ADMIN_CHAT_ID.contains(chatId.toString());
-    }
-
-    private String generatePass(String messageText) {
-        return "1010";
     }
 
 }
