@@ -66,7 +66,13 @@ public class Mybot extends TelegramLongPollingBot {
                     break;
                 }
                 DbManager.INSTANCE.cleanExpiredPasswords();
-                String carPass = DbManager.INSTANCE.createCarPass(carId);
+                String carPass = null;
+                try {
+                    carPass = DbManager.INSTANCE.createCarPass(carId);
+                } catch (SQLException e) {
+                    sendMessage(e.getMessage(), chatId);
+                    break;
+                }
                 sendMessage(carPass, chatId);
                 break;
             case "carPass":

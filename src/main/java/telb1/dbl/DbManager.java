@@ -40,7 +40,7 @@ public class DbManager {
 
     }
 
-    public String createCarPass(Integer carId) {
+    public String createCarPass(Integer carId) throws SQLException {
         String carPass = null;
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
             PreparedStatement preparedStatement = connection.prepareStatement(
@@ -51,8 +51,6 @@ public class DbManager {
             preparedStatement.setDate(3, new java.sql.Date(System.currentTimeMillis()));
             preparedStatement.executeUpdate();
             return carPass;
-        } catch (SQLException e) {
-            throw new RuntimeException(e.getMessage());
         }
     }
     public void cleanExpiredPasswords() {
