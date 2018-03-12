@@ -1,5 +1,6 @@
 package telb1;
 
+import org.sqlite.core.DB;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 
@@ -11,11 +12,11 @@ import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import telb1.dbl.DbManager;
+import telb1.dbl.PasswordModel;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
-
 
 public class Mybot extends TelegramLongPollingBot {
     public long autorityStatus = 0;
@@ -24,7 +25,7 @@ public class Mybot extends TelegramLongPollingBot {
 
         ApiContextInitializer.init();
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+       // BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
         try {
             telegramBotsApi.registerBot(new Mybot());
@@ -56,7 +57,7 @@ public class Mybot extends TelegramLongPollingBot {
         switch (messageType) {
             case "carNumber":
                 if (!isAdmin(chatId)) {
-                    sendMessage("admin permitions need", chatId);
+                    sendMessage("admin permissions need", chatId);
                     break;
                 }
                 Integer carId = DbManager.INSTANCE.getCarId(messageText);
@@ -69,13 +70,25 @@ public class Mybot extends TelegramLongPollingBot {
                 sendMessage(carPass, chatId);
                 break;
             case "carPass":
+                Integer washerId=DbManager.INSTANCE.getWasherId(chatId);
+                if (washerId == null) {
+                    sendMessage("you not washer", chatId);
+                    break;
+                }
                 DbManager.INSTANCE.cleanExpiredPasswords();
-                carId = DbManager.INSTANCE.getCarIdFromPasswords(messageText);
-                if (carId == null) {
+                PasswordModel passwordModel = DbManager.INSTANCE.getPasswordModel(messageText);
+
+                if (passwordModel == null) {
                     sendMessage("wrong or expired password", chatId);
                     break;
                 }
-                sendMessage("very good car password" + messageText, chatId);
+                Integer washingId= null;
+                try {
+                    washingId = DbManager.INSTANCE.washing(passwordModel,chatId,washerId);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e.getMessage());
+                }
+                sendMessage("washing accepted " + washingId, chatId);
                 break;
             case "washerPass":
                 if (!DbManager.INSTANCE.checkWasherPassword(messageText)) {
