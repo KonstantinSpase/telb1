@@ -65,6 +65,8 @@ public class Mybot extends TelegramLongPollingBot {
                     sendMessage("wrong car number", chatId);
                     break;
                 }
+                Integer cw = DbManager.INSTANCE.getCarWashingsInCurrentMonth(carId);
+                sendMessage(cw.toString(), chatId);
                 DbManager.INSTANCE.cleanExpiredPasswords();
                 String carPass = null;
                 try {
@@ -95,6 +97,7 @@ public class Mybot extends TelegramLongPollingBot {
                     throw new RuntimeException(e.getMessage());
                 }
                 sendMessage("washing accepted " + washingId, chatId);
+                DbManager.INSTANCE.getReport();
                 break;
             case "washerPass":
                 if (!DbManager.INSTANCE.checkWasherPassword(messageText)) {

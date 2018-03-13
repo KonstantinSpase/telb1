@@ -1,8 +1,11 @@
 package telb1.dbl;
 
+import org.joda.time.DateTime;
 import telb1.Config;
 
 import java.sql.*;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -48,7 +51,9 @@ public class DbManager {
             carPass = String.format("%04d", new Random().nextInt(10000));
             preparedStatement.setInt(1, carId);
             preparedStatement.setString(2, "p" + carPass);
-            preparedStatement.setDate(3, new java.sql.Date(System.currentTimeMillis()));
+          // preparedStatement.setDate(3, new java.sql.Date(System.currentTimeMillis()));
+             preparedStatement.setDate(3, new java.sql.Date(DateTime.now().getMillis()));
+
             preparedStatement.executeUpdate();
             return carPass;
         }
@@ -59,7 +64,7 @@ public class DbManager {
                     "DELETE FROM passwords WHERE datetime < ?");
             int passExpiredTime = Integer.parseInt(Config.INSTANCE.CAR_PASSWORD_EXPIRED) * 60000;
             preparedStatement.setDate(1,
-                    new java.sql.Date(System.currentTimeMillis() - passExpiredTime));
+                    new java.sql.Date(DateTime.now().getMillis() - passExpiredTime));
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -185,5 +190,53 @@ public class DbManager {
             }
         }
     return washingId;
+    }
+
+    public int getCarWashingsInCurrentMonth(Integer carId) {
+        try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT COUNT(*) AS total FROM main where car_id=? AND datetime BETWEEN ? AND ?");
+            DateTime startCurrentMonth=DateTime.now().dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
+            DateTime startNextMonth=startCurrentMonth.plusMonths(1).dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
+
+            preparedStatement.setInt(1, carId);
+            preparedStatement.setDate(2,new java.sql.Date(startCurrentMonth.getMillis()));
+            preparedStatement.setDate(3,new java.sql.Date(startNextMonth.getMillis()-1));
+            ResultSet rs = preparedStatement.executeQuery();
+            rs.next();
+            return rs.getInt("total");
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public void getReport() {
+        List<WashingModel> result=new LinkedList<>();
+        try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT m.washing_id,m.datetime,c.gos_num,c.fz,w.point,w.smena,m.chat_id " +
+                            "FROM main m "+
+                    "INNER JOIN cars c ON m.car_id=c.car_id "+
+                            "INNER JOIN washers w ON m.washer_id=w.washer_id "
+
+            );
+            ResultSet rs = preparedStatement.executeQuery();
+           while (rs.next()) {
+               DateTime dateTime=new DateTime(rs.getDate("datetime"));
+                WashingModel washingModel=new WashingModel(
+                        rs.getInt("washing_id"),
+                        dateTime,
+                        rs.getString("gos_num"),
+                        rs.getString("fz"),
+                        rs.getString("point"),
+                        rs.getString("smena"),
+                        rs.getLong("chat_id")
+                        );
+               System.out.println(washingModel);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 }
