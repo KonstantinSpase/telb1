@@ -1,9 +1,10 @@
 package telb1;
 
-import org.sqlite.core.DB;
-import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.joda.time.DateTime;
 
+import org.joda.time.YearMonth;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
@@ -12,11 +13,10 @@ import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import telb1.dbl.DbManager;
-import telb1.dbl.PasswordModel;
+import telb1.dbl.WashingModel;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.sql.SQLException;
+import java.util.List;
 
 public class Mybot extends TelegramLongPollingBot {
     public long autorityStatus = 0;
@@ -65,12 +65,14 @@ public class Mybot extends TelegramLongPollingBot {
                     sendMessage("wrong car number", chatId);
                     break;
                 }
-                Integer cw = DbManager.INSTANCE.getCarWashingsInCurrentMonth(carId);
+                DateTime requestDataTime=DateTime.now();
+                Integer cw = DbManager.INSTANCE.getCarWashingsInCurrentMonth(carId,requestDataTime);
                 sendMessage(cw.toString(), chatId);
-                DbManager.INSTANCE.cleanExpiredPasswords();
+
+                DbManager.INSTANCE.cleanExpiredPasswords(requestDataTime);
                 String carPass = null;
                 try {
-                    carPass = DbManager.INSTANCE.createCarPass(carId);
+                    carPass = DbManager.INSTANCE.createCarPass(carId,requestDataTime);
                 } catch (SQLException e) {
                     sendMessage(e.getMessage(), chatId);
                     break;
@@ -83,21 +85,22 @@ public class Mybot extends TelegramLongPollingBot {
                     sendMessage("you not washer", chatId);
                     break;
                 }
-                DbManager.INSTANCE.cleanExpiredPasswords();
-                PasswordModel passwordModel = DbManager.INSTANCE.getPasswordModel(messageText);
+                DateTime checkDateTime = DateTime.now();
+                DbManager.INSTANCE.cleanExpiredPasswords(checkDateTime);
+                carId = DbManager.INSTANCE.getCarIdByPassword(messageText);
 
-                if (passwordModel == null) {
+                if (carId == null) {
                     sendMessage("wrong or expired password", chatId);
                     break;
                 }
                 Integer washingId= null;
                 try {
-                    washingId = DbManager.INSTANCE.washing(passwordModel,chatId,washerId);
+                    washingId = DbManager.INSTANCE.washing(carId,chatId,washerId,checkDateTime);
                 } catch (SQLException e) {
                     throw new RuntimeException(e.getMessage());
                 }
                 sendMessage("washing accepted " + washingId, chatId);
-                DbManager.INSTANCE.getReport();
+
                 break;
             case "washerPass":
                 if (!DbManager.INSTANCE.checkWasherPassword(messageText)) {
@@ -111,7 +114,18 @@ public class Mybot extends TelegramLongPollingBot {
                     throw new RuntimeException(e.getMessage());
                 }
                 break;
+            case "date":
+                if (!isAdmin(chatId)) {
+                    sendMessage("admin permissions need", chatId);
+                    break;
+                }
+                YearMonth yearMonth=YearMonth.parse(messageText, DateTimeFormat.forPattern("MM/yy"));
+             List<WashingModel> washings = DbManager.INSTANCE.getMonthReport(yearMonth);
+             for (WashingModel washing:washings){
+                 sendMessage(washing.toString(), chatId);
+             }
 
+                break;
             default:
                 sendMessage("wrong command " + messageType, chatId);
         }
@@ -133,6 +147,7 @@ public class Mybot extends TelegramLongPollingBot {
         if (message.matches("\\d{4}")) return "carPass";
         if (message.matches("[А-Яа-яЁё]\\d{3}[А-Яа-яЁё]{2}\\d{2,3}")) return "carNumber";
         if (message.length() == 6) return "washerPass";
+        if (message.matches("^(?:0[1-9]|1[0-2])/[0-9]{2}$")) return "date";
         return message;
     }
 

@@ -1,9 +1,12 @@
 package telb1.dbl;
 
 import org.joda.time.DateTime;
+import org.joda.time.YearMonth;
+
 import telb1.Config;
 
 import java.sql.*;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -43,7 +46,7 @@ public class DbManager {
 
     }
 
-    public String createCarPass(Integer carId) throws SQLException {
+    public String createCarPass(Integer carId,DateTime requestDateTime) throws SQLException {
         String carPass = null;
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
             PreparedStatement preparedStatement = connection.prepareStatement(
@@ -51,20 +54,23 @@ public class DbManager {
             carPass = String.format("%04d", new Random().nextInt(10000));
             preparedStatement.setInt(1, carId);
             preparedStatement.setString(2, "p" + carPass);
-          // preparedStatement.setDate(3, new java.sql.Date(System.currentTimeMillis()));
-             preparedStatement.setDate(3, new java.sql.Date(DateTime.now().getMillis()));
+             preparedStatement.setDate(3, new java.sql.Date(requestDateTime.getMillis()));
 
             preparedStatement.executeUpdate();
             return carPass;
         }
     }
-    public void cleanExpiredPasswords() {
+    public void cleanExpiredPasswords(DateTime checkDateTime) {
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
             PreparedStatement preparedStatement = connection.prepareStatement(
-                    "DELETE FROM passwords WHERE datetime < ?");
+                    "DELETE FROM passwords WHERE datetime < ? OR datetime<?");
             int passExpiredTime = Integer.parseInt(Config.INSTANCE.CAR_PASSWORD_EXPIRED) * 60000;
+            DateTime startCurrentMonth=DateTime.now().dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
+
             preparedStatement.setDate(1,
-                    new java.sql.Date(DateTime.now().getMillis() - passExpiredTime));
+                    new java.sql.Date(checkDateTime.getMillis() - passExpiredTime));
+            preparedStatement.setDate(2,
+                    new java.sql.Date(startCurrentMonth.getMillis()));
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -120,21 +126,19 @@ public class DbManager {
         }
     }
 
-    public PasswordModel getPasswordModel(String carPassword) {
-        PasswordModel passwordModel=null;
+    public Integer getCarIdByPassword(String carPassword) {
+        Integer carId=null;
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
             PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT * FROM passwords where password=?");
+                    "SELECT car_id FROM passwords where password=?");
 
             preparedStatement.setString(1, "p" + carPassword);
             ResultSet rs = preparedStatement.executeQuery();
 
             if (rs.next()) {
-                passwordModel=new PasswordModel(
-                        rs.getInt("car_id"), null, rs.getDate("datetime"));
+             carId=rs.getInt("car_id");
             }
-
-            return passwordModel;
+            return carId;
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -156,7 +160,8 @@ public class DbManager {
         }
     }
 
-    public Integer washing(PasswordModel passwordModel, Long chatId, Integer washerId) throws SQLException {
+    public Integer washing(Integer carId, Long chatId, Integer washerId,
+                           DateTime washingDateTime) throws SQLException {
         Connection connection = null;
         Integer washingId = null;
         try {
@@ -164,8 +169,9 @@ public class DbManager {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection.prepareStatement(
                     "INSERT INTO main(datetime,car_id,washer_id,chat_id) values(?,?,?,?)");
-            preparedStatement.setDate(1, passwordModel.getDatetime());
-            preparedStatement.setInt(2, passwordModel.getCar_id());
+           preparedStatement.setDate(1,
+                   new java.sql.Date(washingDateTime.getMillis()));
+            preparedStatement.setInt(2, carId);
             preparedStatement.setInt(3, washerId);
             preparedStatement.setLong(4, chatId);
             preparedStatement.executeUpdate();
@@ -176,7 +182,7 @@ public class DbManager {
             }
             preparedStatement = connection.prepareStatement(
                     "DELETE FROM passwords WHERE car_id = ?");
-            preparedStatement.setLong(1, passwordModel.getCar_id());
+            preparedStatement.setLong(1, carId);
             preparedStatement.executeUpdate();
             connection.commit();
         } catch (SQLException e) {
@@ -192,11 +198,11 @@ public class DbManager {
     return washingId;
     }
 
-    public int getCarWashingsInCurrentMonth(Integer carId) {
+    public int getCarWashingsInCurrentMonth(Integer carId, DateTime checkDateTime) {
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
             PreparedStatement preparedStatement = connection.prepareStatement(
                     "SELECT COUNT(*) AS total FROM main where car_id=? AND datetime BETWEEN ? AND ?");
-            DateTime startCurrentMonth=DateTime.now().dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
+            DateTime startCurrentMonth=checkDateTime.dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
             DateTime startNextMonth=startCurrentMonth.plusMonths(1).dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
 
             preparedStatement.setInt(1, carId);
@@ -210,16 +216,22 @@ public class DbManager {
         }
     }
 
-    public void getReport() {
+    public List<WashingModel> getMonthReport(YearMonth yearMonth) {
         List<WashingModel> result=new LinkedList<>();
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
             PreparedStatement preparedStatement = connection.prepareStatement(
                     "SELECT m.washing_id,m.datetime,c.gos_num,c.fz,w.point,w.smena,m.chat_id " +
                             "FROM main m "+
                     "INNER JOIN cars c ON m.car_id=c.car_id "+
-                            "INNER JOIN washers w ON m.washer_id=w.washer_id "
+                            "INNER JOIN washers w ON m.washer_id=w.washer_id " +
+                            "WHERE datetime BETWEEN ? AND ?"
 
             );
+            DateTime startCurrentMonth=yearMonth.toDateTime(null).dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
+            DateTime startNextMonth=startCurrentMonth.plusMonths(1).dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
+            preparedStatement.setDate(1,new java.sql.Date(startCurrentMonth.getMillis()));
+            preparedStatement.setDate(2,new java.sql.Date(startNextMonth.getMillis()-1));
+
             ResultSet rs = preparedStatement.executeQuery();
            while (rs.next()) {
                DateTime dateTime=new DateTime(rs.getDate("datetime"));
@@ -232,11 +244,13 @@ public class DbManager {
                         rs.getString("smena"),
                         rs.getLong("chat_id")
                         );
-               System.out.println(washingModel);
+              // System.out.println(washingModel);
+               result.add(washingModel);
             }
 
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
+        return result;
     }
 }

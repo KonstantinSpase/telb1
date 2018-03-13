@@ -6,5 +6,5 @@
 lib/
 target/
 /telb1.iml
-!/.gitignore
 /config.properties
+/.gitignore
