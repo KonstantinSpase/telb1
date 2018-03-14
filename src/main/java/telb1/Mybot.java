@@ -5,6 +5,7 @@ import org.joda.time.DateTime;
 import org.joda.time.YearMonth;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.telegram.telegrambots.api.methods.send.SendDocument;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
@@ -15,6 +16,9 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import telb1.dbl.DbManager;
 import telb1.dbl.WashingModel;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -25,7 +29,7 @@ public class Mybot extends TelegramLongPollingBot {
 
         ApiContextInitializer.init();
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-       // BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+        // BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
         try {
             telegramBotsApi.registerBot(new Mybot());
@@ -65,14 +69,14 @@ public class Mybot extends TelegramLongPollingBot {
                     sendMessage("wrong car number", chatId);
                     break;
                 }
-                DateTime requestDataTime=DateTime.now();
-                Integer cw = DbManager.INSTANCE.getCarWashingsInCurrentMonth(carId,requestDataTime);
+                DateTime requestDataTime = DateTime.now();
+                Integer cw = DbManager.INSTANCE.getCarWashingsInCurrentMonth(carId, requestDataTime);
                 sendMessage(cw.toString(), chatId);
 
                 DbManager.INSTANCE.cleanExpiredPasswords(requestDataTime);
                 String carPass = null;
                 try {
-                    carPass = DbManager.INSTANCE.createCarPass(carId,requestDataTime);
+                    carPass = DbManager.INSTANCE.createCarPass(carId, requestDataTime);
                 } catch (SQLException e) {
                     sendMessage(e.getMessage(), chatId);
                     break;
@@ -80,7 +84,7 @@ public class Mybot extends TelegramLongPollingBot {
                 sendMessage(carPass, chatId);
                 break;
             case "carPass":
-                Integer washerId=DbManager.INSTANCE.getWasherId(chatId);
+                Integer washerId = DbManager.INSTANCE.getWasherId(chatId);
                 if (washerId == null) {
                     sendMessage("you not washer", chatId);
                     break;
@@ -93,9 +97,9 @@ public class Mybot extends TelegramLongPollingBot {
                     sendMessage("wrong or expired password", chatId);
                     break;
                 }
-                Integer washingId= null;
+                Integer washingId = null;
                 try {
-                    washingId = DbManager.INSTANCE.washing(carId,chatId,washerId,checkDateTime);
+                    washingId = DbManager.INSTANCE.washing(carId, chatId, washerId, checkDateTime);
                 } catch (SQLException e) {
                     throw new RuntimeException(e.getMessage());
                 }
@@ -119,13 +123,20 @@ public class Mybot extends TelegramLongPollingBot {
                     sendMessage("admin permissions need", chatId);
                     break;
                 }
-                YearMonth yearMonth=YearMonth.parse(messageText, DateTimeFormat.forPattern("MM/yy"));
-             List<WashingModel> washings = DbManager.INSTANCE.getMonthReport(yearMonth);
-             for (WashingModel washing:washings){
-                 sendMessage(washing.toString(), chatId);
-             }
-
+                ByteArrayOutputStream out = null;
+                try {
+                    out = new ReportBuilder().build(messageText);
+                    SendDocument sendDocument = new SendDocument()
+                            .setChatId(chatId)
+                            .setNewDocument("report.xlsx",
+                                    new ByteArrayInputStream(out.toByteArray()));
+                    sendDocument(sendDocument);
+                    out.close();
+                } catch (IOException | TelegramApiException e) {
+                    throw new RuntimeException(e.getMessage());
+                }
                 break;
+
             default:
                 sendMessage("wrong command " + messageType, chatId);
         }
