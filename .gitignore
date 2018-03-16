@@ -10,3 +10,4 @@ target/
 /.gitignore
 /sample.db
 dependency-reduced-pom.xml
+/dependency-reduced-pom.xml

@@ -137,7 +137,7 @@ public class Mybot extends TelegramLongPollingBot {
                     sendMessage("admin permissions need", chatId);
                     break;
                 }
-
+//
               int total= DbManager.INSTANCE.getTotalCurrentMonth();
                // sendMessage("всего за месяц: " + total, chatId);
                List<String> totalPerPoint = DbManager.INSTANCE.getMonthReport1(new YearMonth(DateTime.now().getMillis()));
