@@ -8,3 +8,5 @@ target/
 /telb1.iml
 /config.properties
 /.gitignore
+/sample.db
+dependency-reduced-pom.xml

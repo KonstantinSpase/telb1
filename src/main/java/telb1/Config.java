@@ -11,6 +11,7 @@ import java.util.Properties;
  */
 public class Config {
    public static final Config INSTANCE = new Config();
+    public final String BOSS_CHAT_ID;
     public   final String CAR_PASSWORD_EXPIRED ;
     public final String BOT_NAME;
     public final String BOT_TOKEN;
@@ -25,6 +26,7 @@ public final  String ADMIN_CHAT_ID;
             BOT_TOKEN = props.getProperty("bot.token");
             DATABASE_URL=props.getProperty("database.url");
             ADMIN_CHAT_ID=props.getProperty("admin.chat.id");
+            BOSS_CHAT_ID =props.getProperty("boss.chat.id");
             CAR_PASSWORD_EXPIRED=props.getProperty("car.password.expiration.time.minutes");
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage());

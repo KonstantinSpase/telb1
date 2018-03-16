@@ -11,30 +11,26 @@ public class WashingModel {
     private String gosNomer;
     private String fz;
     private String point;
-    private String smena;
-    private Long chatId;
+    private String washerName;
 
-    public WashingModel(Integer washingId, DateTime dateTime, String gosNomer, String fz, String point, String smena, Long chatId) {
+    public WashingModel(Integer washingId, DateTime dateTime, String gosNomer, String fz, String point, String washerName) {
         this.washingId = washingId;
         this.dateTime = dateTime;
         this.gosNomer = gosNomer;
         this.fz = fz;
         this.point = point;
-        this.smena = smena;
-        this.chatId = chatId;
+        this.washerName = washerName;
     }
 
     @Override
     public String toString() {
-        return "WashingModel{" +
+        return
                 "washingId=" + washingId +
-                ", dateTime=" + dateTime +
-                ", gosNomer='" + gosNomer + '\'' +
-                ", fz='" + fz + '\'' +
-                ", point='" + point + '\'' +
-                ", smena='" + smena + '\'' +
-                ", chatId=" + chatId +
-                '}';
+                        ", dateTime=" + dateTime +
+                        ", gosNomer='" + gosNomer + '\'' +
+                        ", fz='" + fz + '\'' +
+                        ", point='" + point + '\'' +
+                        ", chatId=" + washerName;
     }
 
     public Integer getWashingId() {
@@ -77,19 +73,14 @@ public class WashingModel {
         this.point = point;
     }
 
-    public String getSmena() {
-        return smena;
+    public String getWasherName() {
+        return washerName;
     }
 
-    public void setSmena(String smena) {
-        this.smena = smena;
-    }
-
-    public Long getChatId() {
-        return chatId;
-    }
-
-    public void setChatId(Long chatId) {
-        this.chatId = chatId;
+    public void setWasherName(String washerName) {
+        this.washerName = washerName;
     }
 }
+
+
+
