@@ -93,16 +93,16 @@ public class Mybot extends TelegramLongPollingBot {
                     sendMessage("wrong or expired password", chatId);
                     break;
                 }
-
+                String gosNum = DbManager.INSTANCE.getCarNumberByCarId(carId);
                 try {
                     DbManager.INSTANCE.washing(carId,  washer.getWasherId(), checkDateTime);
                 } catch (SQLException e) {
                     sendMessage("ошибка сервера " , chatId);
                 }
                 int userWashingsMonth = DbManager.INSTANCE.getUserWashingsMonth(washer.getWasherId(),checkDateTime);
-                int pointWashingsMonth = DbManager.INSTANCE.getPointWashingsMonth(washer.getPoint(),checkDateTime);
-                sendMessage("мойка подтвержена. итого за месяц: \nперсонально - " +userWashingsMonth+
-                        "\nвсего - "+pointWashingsMonth, chatId);
+                //int pointWashingsMonth = DbManager.INSTANCE.getPointWashingsMonth(washer.getPoint(),checkDateTime);
+                //String gosNum = DbManager.INSTANCE.getCarNumberByCarId(carId);
+                sendMessage("мойка " + gosNum + " подтвержена. \nитого за месяц: " +userWashingsMonth, chatId);
                 break;
             case "washerPass":
 
@@ -115,7 +115,7 @@ public class Mybot extends TelegramLongPollingBot {
                 break;
 
             case "date":
-                if (!isAdmin(chatId)) {
+                if (!(isAdmin(chatId)||isBoss(chatId))) {
                     sendMessage("admin permissions need", chatId);
                     break;
                 }

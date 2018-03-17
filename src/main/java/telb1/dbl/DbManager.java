@@ -142,6 +142,25 @@ public class DbManager {
             throw new RuntimeException(e.getMessage());
         }
     }
+    public String getCarNumberByCarId(Integer carId) {
+        String gosNum = null;
+        try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT gos_num FROM cars where car_id=?");
+
+            preparedStatement.setString(1,"" + carId);
+            ResultSet rs = preparedStatement.executeQuery();
+
+            if (rs.next()) {
+                gosNum = rs.getString("gos_num");
+            }
+            return gosNum;
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+
 
     public WasherModel getWasher(Long chatId) {
         WasherModel washer = null;
