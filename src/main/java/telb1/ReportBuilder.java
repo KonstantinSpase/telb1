@@ -35,13 +35,32 @@ public class ReportBuilder {
             row.createCell(1).setCellValue(washing.getGosNomer());
             row.createCell(2).setCellValue(washing.getFz());
             row.createCell(3).setCellValue(washing.getPoint());
-            row.createCell(4).setCellValue(washing.getWasherName());
 
             i++;
         }
         for(int columnIndex = 0; columnIndex < 5; columnIndex++) {
             sheet.autoSizeColumn(columnIndex);
         }
+
+        List<Integer[]> washingsByFz = DbManager.INSTANCE.getWashingsByFz(yearMonth);
+        Sheet sheet1 = wb.createSheet("Суммы по ФЗ");
+
+      /*  CellStyle dataStyle = wb.createCellStyle();
+        dataStyle.setDataFormat(
+                createHelper.createDataFormat().getFormat("dd/MM/yy hh:mm"));*/
+
+        i = 2;
+        int washingPrice=Integer.parseInt(Config.INSTANCE.WASHING_PRICE);
+        for (Integer [] line :washingsByFz) {
+            Row row = sheet1.createRow(i);
+            row.createCell(0).setCellValue(line[0]);
+            row.createCell(1).setCellValue(line[1]*washingPrice);
+            i++;
+        }
+        for(int columnIndex = 0; columnIndex < 2; columnIndex++) {
+            sheet1.autoSizeColumn(columnIndex);
+        }
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         wb.write(out);
         return out;

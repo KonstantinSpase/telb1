@@ -5,9 +5,9 @@
 .idea/
 lib/
 target/
-/telb1.iml
-/config.properties
-/.gitignore
-/sample.db
+telb1.iml
+config.properties
+.gitignore
+sample.db
 dependency-reduced-pom.xml
-/dependency-reduced-pom.xml
+

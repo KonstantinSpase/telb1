@@ -46,6 +46,25 @@ public class DbManager {
 
     }
 
+    public String getCarNumber(Integer carId) {
+        String carNumber = null;
+        try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT * FROM cars where car_id=?");
+
+            preparedStatement.setInt(1, carId);
+            ResultSet rs = preparedStatement.executeQuery();
+
+            if (rs.next()) {
+                carNumber = rs.getString("gos_num");
+            }
+
+            return carNumber;
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
     public String createCarPass(Integer carId, DateTime requestDateTime) throws SQLException {
         String carPass = null;
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
@@ -97,31 +116,31 @@ public class DbManager {
         }
     }*/
 
-    public String washerRegistration(String washerPassword, Long chatId) {
-
+    public String washerRegistration(String washerPassword, Long chatId, String washerName) {
+        String point = null;
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
             PreparedStatement preparedStatement = connection.prepareStatement(
                     "SELECT * FROM washers WHERE password=?");
 
             preparedStatement.setString(1, washerPassword);
             ResultSet rs = preparedStatement.executeQuery();
-            String washerName;
             if (rs.next()) {
                 if (rs.getObject("chat_id") != null) {
-                    throw (new RuntimeException("пользователь уже активирован"));
+                    throw (new RuntimeException("пароль уже активирован"));
                 }
-                washerName = rs.getString("washer_name");
+                point = rs.getString("point");
             } else {
                 throw (new RuntimeException("неправильный пароль"));
             }
             preparedStatement = connection.prepareStatement(
-                    "UPDATE washers SET chat_id = ? WHERE password=?");
+                    "UPDATE washers SET chat_id = ?,washer_name=? WHERE password=?");
             preparedStatement.setLong(1, chatId);
             preparedStatement.setString(2, washerPassword);
+            preparedStatement.setString(3, washerName);
             preparedStatement.executeUpdate();
-            return washerName;
+            return point;
         } catch (SQLException e) {
-            throw new RuntimeException("на данный телефон активирован другой пользователь");
+            throw new RuntimeException("данный телефон активирован на другой объект");
         }
     }
 
@@ -143,19 +162,17 @@ public class DbManager {
         }
     }
 
-    public WasherModel getWasher(Long chatId) {
-        WasherModel washer = null;
+    public Integer getWasherId(Long chatId) {
+        Integer washerId = null;
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
             PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT * FROM washers where chat_id=?");
+                    "SELECT washer_id FROM washers where chat_id=?");
             preparedStatement.setLong(1, chatId);
             ResultSet rs = preparedStatement.executeQuery();
             if (rs.next()) {
-                washer = new WasherModel(rs.getInt("washer_id"),
-                        rs.getString("point"),
-                        rs.getString("washer_name"));
+                washerId = rs.getInt("washer_id");
             }
-            return washer;
+            return washerId;
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -216,7 +233,7 @@ public class DbManager {
         }
     }
 
-    public int getUserWashingsMonth(Integer washer_id, DateTime checkDateTime) {
+    public int getPointWashingsMonth(Integer washer_id, DateTime checkDateTime) {
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
             PreparedStatement preparedStatement = connection.prepareStatement(
                     "SELECT COUNT(*) AS total FROM main where washer_id=? AND datetime BETWEEN ? AND ?");
@@ -234,7 +251,7 @@ public class DbManager {
         }
     }
 
-    public int getPointWashingsMonth(String point, DateTime checkDateTime) {
+  /*  public int getPointWashingsMonth(String point, DateTime checkDateTime) {
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
             PreparedStatement preparedStatement = connection.prepareStatement(
                     "SELECT COUNT(*) AS total FROM main where washer_id IN " +
@@ -251,7 +268,7 @@ public class DbManager {
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
-    }
+    }*/
 
     public List<String> getMonthReport1(YearMonth yearMonth) {
         List<String> result = new LinkedList<>();
@@ -271,7 +288,7 @@ public class DbManager {
 
             ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
-               result.add(rs.getString("point")+" - "+rs.getInt("total"));
+                result.add(rs.getString("point") + " - " + rs.getInt("total"));
             }
 
         } catch (Exception e) {
@@ -333,5 +350,34 @@ public class DbManager {
             throw new RuntimeException(e.getMessage());
         }
 
+    }
+
+
+    public List<Integer[]> getWashingsByFz(YearMonth yearMonth) {
+        List<Integer[]> result = new LinkedList<>();
+        try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT COUNT (m.washing_id) as total, c.fz " +
+                            "FROM main m " +
+                            "INNER JOIN cars c ON m.car_id=c.car_id " +
+                            "WHERE datetime BETWEEN ? AND ? " +
+                            "GROUP BY c.fz"
+
+            );
+            DateTime startCurrentMonth = yearMonth.toDateTime(null).dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
+            DateTime startNextMonth = startCurrentMonth.plusMonths(1).dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
+            preparedStatement.setDate(1, new java.sql.Date(startCurrentMonth.getMillis()));
+            preparedStatement.setDate(2, new java.sql.Date(startNextMonth.getMillis() - 1));
+
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+               Integer[] fz={rs.getInt("fz"), rs.getInt("total")};
+                result.add( fz);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        return result;
     }
 }

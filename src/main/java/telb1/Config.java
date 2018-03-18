@@ -17,6 +17,7 @@ public class Config {
     public final String BOT_TOKEN;
    public final String DATABASE_URL;
 public final  String ADMIN_CHAT_ID;
+    public final  String WASHING_PRICE;
     private Config() {
         Properties props = new Properties();
         try (FileInputStream fileInputStream = new FileInputStream(
@@ -28,6 +29,7 @@ public final  String ADMIN_CHAT_ID;
             ADMIN_CHAT_ID=props.getProperty("admin.chat.id");
             BOSS_CHAT_ID =props.getProperty("boss.chat.id");
             CAR_PASSWORD_EXPIRED=props.getProperty("car.password.expiration.time.minutes");
+            WASHING_PRICE=props.getProperty("washing.price");
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage());
         }

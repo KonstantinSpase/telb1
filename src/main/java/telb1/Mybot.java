@@ -53,6 +53,7 @@ public class Mybot extends TelegramLongPollingBot {
         if (message == null || !message.hasText()) return;
         String messageText = message.getText();
         Long chatId = message.getChatId();
+        String user=message.getContact().toString();
         String messageType = getMessageType(messageText);
         switch (messageType) {
             case "carNumber":
@@ -80,9 +81,9 @@ public class Mybot extends TelegramLongPollingBot {
                 sendMessage(carPass, chatId);
                 break;
             case "carPass":
-                WasherModel washer = DbManager.INSTANCE.getWasher(chatId);
-                if (washer == null) {
-                    sendMessage("you not washer", chatId);
+                Integer washerId = DbManager.INSTANCE.getWasherId(chatId);
+                if (washerId == null) {
+                    sendMessage("телефон не зарегистрирован", chatId);
                     break;
                 }
                 DateTime checkDateTime = DateTime.now();
@@ -90,27 +91,29 @@ public class Mybot extends TelegramLongPollingBot {
                 carId = DbManager.INSTANCE.getCarIdByPassword(messageText);
 
                 if (carId == null) {
-                    sendMessage("wrong or expired password", chatId);
+                    sendMessage("неправильный или просроченый пароль", chatId);
                     break;
                 }
-
-                try {
-                    DbManager.INSTANCE.washing(carId,  washer.getWasherId(), checkDateTime);
-                } catch (SQLException e) {
-                    sendMessage("ошибка сервера " , chatId);
+                String carNumber = DbManager.INSTANCE.getCarNumber(carId);
+                if (carNumber == null) {
+                    sendMessage("автомобиль отсутствует в базе", chatId);
+                    break;
                 }
-                int userWashingsMonth = DbManager.INSTANCE.getUserWashingsMonth(washer.getWasherId(),checkDateTime);
-                int pointWashingsMonth = DbManager.INSTANCE.getPointWashingsMonth(washer.getPoint(),checkDateTime);
-                sendMessage("мойка подтвержена. итого за месяц: \nперсонально - " +userWashingsMonth+
-                        "\nвсего - "+pointWashingsMonth, chatId);
+                try {
+                    DbManager.INSTANCE.washing(carId, washerId, checkDateTime);
+                } catch (SQLException e) {
+                    sendMessage("ошибка сервера ", chatId);
+                }
+                int pointWashingsMonth = DbManager.INSTANCE.getPointWashingsMonth(washerId, checkDateTime);
+                sendMessage("Мойка "+carNumber+" подтвержена. \nИтого за месяц: " + pointWashingsMonth, chatId);
                 break;
             case "washerPass":
 
                 try {
-                    String washerName=DbManager.INSTANCE.washerRegistration(messageText, chatId);
-                    sendMessage("пользователь "+ washerName +" активирован" , chatId);
+                    String point= DbManager.INSTANCE.washerRegistration(messageText, chatId,user);
+                    sendMessage("администратор мойки "+point+" активирован", chatId);
                 } catch (RuntimeException e) {
-                    sendMessage(e.getMessage() , chatId);
+                    sendMessage(e.getMessage(), chatId);
                 }
                 break;
 
@@ -132,26 +135,26 @@ public class Mybot extends TelegramLongPollingBot {
                     throw new RuntimeException(e.getMessage());
                 }
                 break;
-            case "total":
-                if (!(isAdmin(chatId)||isBoss(chatId))) {
+            case "Total":
+                if (!(isAdmin(chatId) || isBoss(chatId))) {
                     sendMessage("admin permissions need", chatId);
                     break;
                 }
 //
-              int total= DbManager.INSTANCE.getTotalCurrentMonth();
-               // sendMessage("всего за месяц: " + total, chatId);
-               List<String> totalPerPoint = DbManager.INSTANCE.getMonthReport1(new YearMonth(DateTime.now().getMillis()));
-                StringBuilder sb=new StringBuilder();
-                sb.append("всего за месяц:    " + total+
-                                "\nвсего за месяц($): " + total*250+
+                int total = DbManager.INSTANCE.getTotalCurrentMonth();
+                // sendMessage("всего за месяц: " + total, chatId);
+                List<String> totalPerPoint = DbManager.INSTANCE.getMonthReport1(new YearMonth(DateTime.now().getMillis()));
+                StringBuilder sb = new StringBuilder();
+                sb.append("всего за месяц:    " + total +
+                        "\nвсего за месяц($): " + total * 250 +
                         "\n-----------------------------\n");
-                for (String s:totalPerPoint){
-                    sb.append(s+"\n");
+                for (String s : totalPerPoint) {
+                    sb.append(s + "\n");
                 }
                 sendMessage(sb.toString(), chatId);
                 break;
             default:
-                sendMessage("команда " + messageType+" не существует", chatId);
+                sendMessage("команда " + messageType + " не существует", chatId);
         }
 
     }
@@ -178,6 +181,7 @@ public class Mybot extends TelegramLongPollingBot {
     private boolean isAdmin(Long chatId) {
         return Config.INSTANCE.ADMIN_CHAT_ID.contains(chatId.toString());
     }
+
     private boolean isBoss(Long chatId) {
         return Config.INSTANCE.BOSS_CHAT_ID.contains(chatId.toString());
     }
