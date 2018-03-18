@@ -18,9 +18,11 @@ public class ReportBuilder {
     public ByteArrayOutputStream build(String month) throws IOException {
         YearMonth yearMonth = YearMonth.parse(month, DateTimeFormat.forPattern("MM/yy"));
         List<WashingModel> washings = DbManager.INSTANCE.getMonthReport(yearMonth);
+        //List<WashingModel> fzSumm = DbManager.INSTANCE.getFzMonthReport(yearMonth);
         Workbook wb = new XSSFWorkbook();
         CreationHelper createHelper = wb.getCreationHelper();
         Sheet sheet = wb.createSheet("new sheet");
+        Sheet sheetFz = wb.createSheet("Суммы по FZ");
 
         CellStyle dataStyle = wb.createCellStyle();
         dataStyle.setDataFormat(
@@ -35,13 +37,17 @@ public class ReportBuilder {
             row.createCell(1).setCellValue(washing.getGosNomer());
             row.createCell(2).setCellValue(washing.getFz());
             row.createCell(3).setCellValue(washing.getPoint());
-            row.createCell(4).setCellValue(washing.getWasherName());
+            //row.createCell(4).setCellValue(washing.getWasherName());
 
             i++;
         }
         for(int columnIndex = 0; columnIndex < 5; columnIndex++) {
             sheet.autoSizeColumn(columnIndex);
         }
+
+
+
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         wb.write(out);
         return out;

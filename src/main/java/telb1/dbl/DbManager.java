@@ -299,6 +299,43 @@ public class DbManager {
         return result;
     }
 
+    public List<WashingModel> getFzMonthReport(YearMonth yearMonth) {
+        List<WashingModel> result = new LinkedList<>();
+        try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT summ.washing_id,m.datetime,c.gos_num,c.fz,w.point,w.washer_name " +
+                            "FROM main m " +
+                            "INNER JOIN cars c ON m.car_id=c.car_id " +
+                            "INNER JOIN washers w ON m.washer_id=w.washer_id " +
+                            "WHERE datetime BETWEEN ? AND ?"
+
+            );
+            DateTime startCurrentMonth = yearMonth.toDateTime(null).dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
+            DateTime startNextMonth = startCurrentMonth.plusMonths(1).dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
+            preparedStatement.setDate(1, new java.sql.Date(startCurrentMonth.getMillis()));
+            preparedStatement.setDate(2, new java.sql.Date(startNextMonth.getMillis() - 1));
+
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                DateTime dateTime = new DateTime(rs.getDate("datetime"));
+                WashingModel washingModel = new WashingModel(
+                        rs.getInt("washing_id"),
+                        dateTime,
+                        rs.getString("gos_num"),
+                        rs.getString("fz"),
+                        rs.getString("point"),
+                        rs.getString("washer_name")
+                );
+                result.add(washingModel);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        return result;
+    }
+
+
     public List<WashingModel> getMonthReport(YearMonth yearMonth) {
         List<WashingModel> result = new LinkedList<>();
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {

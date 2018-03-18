@@ -132,7 +132,7 @@ public class Mybot extends TelegramLongPollingBot {
                     throw new RuntimeException(e.getMessage());
                 }
                 break;
-            case "total":
+            case "Total":
                 if (!(isAdmin(chatId)||isBoss(chatId))) {
                     sendMessage("admin permissions need", chatId);
                     break;
@@ -143,7 +143,7 @@ public class Mybot extends TelegramLongPollingBot {
                List<String> totalPerPoint = DbManager.INSTANCE.getMonthReport1(new YearMonth(DateTime.now().getMillis()));
                 StringBuilder sb=new StringBuilder();
                 sb.append("всего за месяц:    " + total+
-                                "\nвсего за месяц($): " + total*250+
+                                "\nвсего за месяц(руб): " + total*250+
                         "\n-----------------------------\n");
                 for (String s:totalPerPoint){
                     sb.append(s+"\n");
