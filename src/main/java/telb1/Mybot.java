@@ -53,7 +53,7 @@ public class Mybot extends TelegramLongPollingBot {
         if (message == null || !message.hasText()) return;
         String messageText = message.getText();
         Long chatId = message.getChatId();
-        String user=message.getContact().toString();
+        String user=message.getChat().toString();
         String messageType = getMessageType(messageText);
         switch (messageType) {
             case "carNumber":
@@ -118,7 +118,7 @@ public class Mybot extends TelegramLongPollingBot {
                 break;
 
             case "date":
-                if (!isAdmin(chatId)) {
+                if (!(isAdmin(chatId) || isBoss(chatId))) {
                     sendMessage("admin permissions need", chatId);
                     break;
                 }
