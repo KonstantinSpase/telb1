@@ -53,7 +53,7 @@ public class Mybot extends TelegramLongPollingBot {
         if (message == null || !message.hasText()) return;
         String messageText = message.getText();
         Long chatId = message.getChatId();
-        String user=message.getChat().toString();
+        String user=message.getChat().getFirstName();
         String messageType = getMessageType(messageText);
         switch (messageType) {
             case "carNumber":

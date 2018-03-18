@@ -135,8 +135,8 @@ public class DbManager {
             preparedStatement = connection.prepareStatement(
                     "UPDATE washers SET chat_id = ?,washer_name=? WHERE password=?");
             preparedStatement.setLong(1, chatId);
-            preparedStatement.setString(2, washerPassword);
-            preparedStatement.setString(3, washerName);
+            preparedStatement.setString(2, washerName);
+            preparedStatement.setString(3, washerPassword);
             preparedStatement.executeUpdate();
             return point;
         } catch (SQLException e) {
