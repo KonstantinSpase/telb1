@@ -4,6 +4,7 @@ import org.joda.time.DateTime;
 import org.joda.time.YearMonth;
 
 import telb1.Config;
+import telb1.Mybot;
 
 import java.sql.*;
 

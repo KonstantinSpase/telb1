@@ -3,16 +3,17 @@ package telb1;
 import org.joda.time.DateTime;
 
 import org.joda.time.YearMonth;
+import org.telegram.telegrambots.api.methods.BotApiMethod;
 import org.telegram.telegrambots.api.methods.send.SendDocument;
+import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
 import telb1.dbl.DbManager;
-import telb1.dbl.WasherModel;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -20,13 +21,29 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-public class Mybot extends TelegramLongPollingBot {
-    public long autorityStatus = 0;
 
+
+public class Mybot extends TelegramWebhookBot {
+    public long autorityStatus = 0;
+    public static String WORK_DIR="./";
     public static void main(String[] args) {
 
+if (args.length>0){
+    WORK_DIR=args[0];
+}
+
         ApiContextInitializer.init();
-        TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
+        TelegramBotsApi telegramBotsApi = null;
+        try {
+            telegramBotsApi = new TelegramBotsApi(
+                   WORK_DIR+ Config.INSTANCE.KEYSTORE,
+                    Config.INSTANCE.KEYSTORE_PASSWORD,
+                    Config.INSTANCE.WEBHOOK_EXTERNAL_URL ,
+                    Config.INSTANCE.WEBHOOK_INTERNAL_URL ,
+                   WORK_DIR+ Config.INSTANCE.CERT);
+        } catch (TelegramApiRequestException e) {
+            e.printStackTrace();
+        }
         try {
             telegramBotsApi.registerBot(new Mybot());
 
@@ -47,13 +64,26 @@ public class Mybot extends TelegramLongPollingBot {
     }
 
     @Override
-    public void onUpdateReceived(Update update) {
+    public String getBotPath() {
+        return "h2o";
+    }
 
-        Message message = update.getMessage();
-        if (message == null || !message.hasText()) return;
+    @Override
+    public BotApiMethod onWebhookUpdateReceived(Update update) {
+
+       /* if (update.hasMessage() && update.getMessage().hasText()) {
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(update.getMessage().getChatId().toString());
+            sendMessage.setText("Well, all information looks like noise until you break the code.");
+            return sendMessage;
+        }
+        return null;*/
+
+       Message message = update.getMessage();
+        if (message == null || !message.hasText()) return null;
         String messageText = message.getText();
         Long chatId = message.getChatId();
-        String user=message.getChat().getFirstName();
+        String user = message.getChat().getFirstName();
         String messageType = getMessageType(messageText);
         switch (messageType) {
             case "carNumber":
@@ -105,13 +135,13 @@ public class Mybot extends TelegramLongPollingBot {
                     sendMessage("ошибка сервера ", chatId);
                 }
                 int pointWashingsMonth = DbManager.INSTANCE.getPointWashingsMonth(washerId, checkDateTime);
-                sendMessage("Мойка "+carNumber+" подтвержена. \nИтого за месяц: " + pointWashingsMonth, chatId);
+                sendMessage("Мойка " + carNumber + " подтверждена. \nИтого за месяц: " + pointWashingsMonth, chatId);
                 break;
             case "washerPass":
 
                 try {
-                    String point= DbManager.INSTANCE.washerRegistration(messageText, chatId,user);
-                    sendMessage("администратор мойки "+point+" активирован", chatId);
+                    String point = DbManager.INSTANCE.washerRegistration(messageText, chatId, user);
+                    sendMessage("администратор мойки " + point + " активирован", chatId);
                 } catch (RuntimeException e) {
                     sendMessage(e.getMessage(), chatId);
                 }
@@ -146,7 +176,7 @@ public class Mybot extends TelegramLongPollingBot {
                 List<String> totalPerPoint = DbManager.INSTANCE.getMonthReport1(new YearMonth(DateTime.now().getMillis()));
                 StringBuilder sb = new StringBuilder();
                 sb.append("всего за месяц:    " + total +
-                        "\nвсего за месяц($): " + total * 250 +
+                        "\nвсего за месяц(р): " + total * 250 +
                         "\n-----------------------------\n");
                 for (String s : totalPerPoint) {
                     sb.append(s + "\n");
@@ -156,7 +186,7 @@ public class Mybot extends TelegramLongPollingBot {
             default:
                 sendMessage("команда " + messageType + " не существует", chatId);
         }
-
+        return null;
     }
 
     private void sendMessage(String messageText, Long chatId) {
