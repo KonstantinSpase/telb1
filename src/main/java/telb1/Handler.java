@@ -20,32 +20,37 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
-
-public class Mybot extends TelegramWebhookBot {
+public class Handler extends TelegramWebhookBot {
     public long autorityStatus = 0;
-    public static String WORK_DIR="./";
+    private static Logger logger = Logger.getLogger("telb1.Handler");
     public static void main(String[] args) {
-
-if (args.length>0){
-    WORK_DIR=args[0];
-}
-
+        java.util.logging.Handler fh = null;
+        try {
+            fh = new FileHandler(Config.INSTANCE.LOG_PATH);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Logger.getLogger("").addHandler(fh);
+        logger.setLevel(Level.ALL);
         ApiContextInitializer.init();
         TelegramBotsApi telegramBotsApi = null;
         try {
             telegramBotsApi = new TelegramBotsApi(
-                   WORK_DIR+ Config.INSTANCE.KEYSTORE,
+                    Config.INSTANCE.KEYSTORE_PATH,
                     Config.INSTANCE.KEYSTORE_PASSWORD,
-                    Config.INSTANCE.WEBHOOK_EXTERNAL_URL ,
-                    Config.INSTANCE.WEBHOOK_INTERNAL_URL ,
-                   WORK_DIR+ Config.INSTANCE.CERT);
+                    Config.INSTANCE.WEBHOOK_EXTERNAL_URL,
+                    Config.INSTANCE.WEBHOOK_INTERNAL_URL,
+                    Config.INSTANCE.CERT_PATH);
         } catch (TelegramApiRequestException e) {
             e.printStackTrace();
         }
         try {
-            telegramBotsApi.registerBot(new Mybot());
+            telegramBotsApi.registerBot(new Handler());
 
         } catch (TelegramApiException e) {
             e.printStackTrace();
@@ -71,15 +76,7 @@ if (args.length>0){
     @Override
     public BotApiMethod onWebhookUpdateReceived(Update update) {
 
-       /* if (update.hasMessage() && update.getMessage().hasText()) {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(update.getMessage().getChatId().toString());
-            sendMessage.setText("Well, all information looks like noise until you break the code.");
-            return sendMessage;
-        }
-        return null;*/
-
-       Message message = update.getMessage();
+        Message message = update.getMessage();
         if (message == null || !message.hasText()) return null;
         String messageText = message.getText();
         Long chatId = message.getChatId();
@@ -93,6 +90,7 @@ if (args.length>0){
                 }
                 Integer carId = DbManager.INSTANCE.getCarId(messageText);
                 if (carId == null) {
+                    logger.info("wrong car number "+messageText+" by user: " +user );
                     sendMessage("wrong car number", chatId);
                     break;
                 }

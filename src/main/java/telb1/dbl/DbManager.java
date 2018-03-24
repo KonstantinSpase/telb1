@@ -4,7 +4,6 @@ import org.joda.time.DateTime;
 import org.joda.time.YearMonth;
 
 import telb1.Config;
-import telb1.Mybot;
 
 import java.sql.*;
 
@@ -98,24 +97,6 @@ public class DbManager {
         }
     }
 
-   /* public boolean checkWasherPassword(String password) {
-
-        try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT COUNT(*) AS total FROM washers where password=?");
-
-            preparedStatement.setString(1, password);
-            ResultSet rs = preparedStatement.executeQuery();
-
-            while (rs.next()) {
-                if (rs.getInt("total") == 0) return false;
-            }
-
-            return true;
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }*/
 
     public String washerRegistration(String washerPassword, Long chatId, String washerName) {
         String point = null;
@@ -252,25 +233,6 @@ public class DbManager {
         }
     }
 
-  /*  public int getPointWashingsMonth(String point, DateTime checkDateTime) {
-        try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT COUNT(*) AS total FROM main where washer_id IN " +
-                            "(SELECT washer_id FROM washers WHERE point=?)" +
-                            " AND datetime BETWEEN ? AND ?");
-            DateTime startCurrentMonth = checkDateTime.dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
-            DateTime startNextMonth = startCurrentMonth.plusMonths(1).dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
-            preparedStatement.setString(1, point);
-            preparedStatement.setDate(2, new java.sql.Date(startCurrentMonth.getMillis()));
-            preparedStatement.setDate(3, new java.sql.Date(startNextMonth.getMillis() - 1));
-            ResultSet rs = preparedStatement.executeQuery();
-            rs.next();
-            return rs.getInt("total");
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }*/
-
     public List<String> getMonthReport1(YearMonth yearMonth) {
         List<String> result = new LinkedList<>();
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
@@ -334,7 +296,6 @@ public class DbManager {
         return result;
     }
 
-
     public int getTotalCurrentMonth() {
 
         try (Connection connection = DriverManager.getConnection(Config.INSTANCE.DATABASE_URL)) {
@@ -352,7 +313,6 @@ public class DbManager {
         }
 
     }
-
 
     public List<Integer[]> getWashingsByFz(YearMonth yearMonth) {
         List<Integer[]> result = new LinkedList<>();
